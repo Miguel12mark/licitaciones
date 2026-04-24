@@ -32,7 +32,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            return []  # permitir creación sin auth (solo para bootstrap)
+            return [IsAdminUserCustom()]  # permitir creación sin auth (solo para bootstrap)
         return [IsAuthenticated()]
 
     # 🔥 OPCIONAL: QUE EL USER SOLO SE VEA A SÍ MISMO
