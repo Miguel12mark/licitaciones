@@ -30,10 +30,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    # 🔥 CONTROL DE PERMISOS POR ACCIÓN
     def get_permissions(self):
         if self.action == 'create':
-            return [IsAdminUserCustom()]  # solo admin crea usuarios
+            return []  # permitir creación sin auth (solo para bootstrap)
         return [IsAuthenticated()]
 
     # 🔥 OPCIONAL: QUE EL USER SOLO SE VEA A SÍ MISMO
