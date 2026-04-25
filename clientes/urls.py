@@ -11,5 +11,5 @@ urlpatterns = [
     path('clientes/', clientes_view),
 
     # API
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 ]
