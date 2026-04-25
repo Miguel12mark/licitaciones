@@ -8,7 +8,7 @@ router.register(r'clientes', ClienteViewSet, basename='clientes')
 
 urlpatterns = [
      # HTML
-    path('clientes/', clientes_view),
+    path('clientes-view/', clientes_view),
 
     # API
     path('', include(router.urls)),
