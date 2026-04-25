@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="login()">Ingresar</button>
+
+<script>
+function login() {
+    fetch('/api/token/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.access) {
+            localStorage.setItem('token', data.access);
+            alert('Login exitoso');
+            window.location.href = '/clientes-view/';
+        } else {
+            alert('Error en login');
+        }
+    });
+}
+</script>
+
+</body>
+</html>

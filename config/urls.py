@@ -4,10 +4,10 @@ from django.urls import path, include
 from users.views import CustomTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views import home
+from .views import login_view
 
 urlpatterns = [
-    path('', home),
+    path('', login_view),
     
     path('admin/', admin.site.urls),
 
@@ -17,8 +17,11 @@ urlpatterns = [
 
     # 📦 APPS
     path('api/', include('users.urls')),
+    path('api/', include('clientes.urls')),
+    path('api/', include('productos.urls')),
+    path('api/', include('licitaciones.urls')),
+    
     path('', include('clientes.urls')),
     path('', include('productos.urls')),
     path('', include('licitaciones.urls')),
-    
 ]
