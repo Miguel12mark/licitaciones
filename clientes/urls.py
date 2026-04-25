@@ -7,9 +7,9 @@ router = DefaultRouter()
 router.register(r'clientes', ClienteViewSet, basename='clientes')
 
 urlpatterns = [
-    # 🔥 HTML
-    path('clientes-view/', clientes_view),
+     # HTML
+    path('clientes/', clientes_view),
 
-    # 🔗 API
-    path('', include(router.urls)),
+    # API
+    path('api/', include(router.urls)),
 ]

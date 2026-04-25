@@ -17,11 +17,8 @@ urlpatterns = [
 
     # 📦 APPS
     path('api/', include('users.urls')),
-    path('api/', include('clientes.urls')),
+    path('', include('clientes.urls')),
     path('api/', include('productos.urls')),
     path('api/', include('licitaciones.urls')),
     
-    path('', include('clientes.urls')),
-    path('', include('productos.urls')),
-    path('', include('licitaciones.urls')),
 ]
