@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
+from django.shortcuts import render
 from .models import Licitacion
 from .serializers import (
     LicitacionSerializer,
@@ -67,3 +67,7 @@ class LicitacionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+    
+def licitaciones_view(request):
+    licitaciones = Licitacion.objects.all()
+    return render(request, 'licitaciones.html', {'licitaciones': licitaciones})

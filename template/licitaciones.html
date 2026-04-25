@@ -1,0 +1,14 @@
+<h2>Licitaciones</h2>
+
+<ul>
+    {% for l in licitaciones %}
+        <li>
+            ID: {{ l.id }} |
+            Cliente: {{ l.cliente.nombre }} |
+            Estado: {{ l.estado }} |
+            Presupuesto: {{ l.presupuesto_maximo }}
+        </li>
+    {% endfor %}
+</ul>
+
+<a href="/">Volver</a>

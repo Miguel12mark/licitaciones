@@ -1,0 +1,9 @@
+<h2>Productos</h2>
+
+<ul>
+    {% for p in productos %}
+        <li>{{ p.nombre }} - ${{ p.precio }}</li>
+    {% endfor %}
+</ul>
+
+<a href="/">Volver</a>
