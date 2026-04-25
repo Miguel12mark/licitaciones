@@ -28,7 +28,10 @@ function login() {
     .then(data => {
         if (data.access) {
             localStorage.setItem('token', data.access);
-            alert('Login exitoso');
+
+            // 🔥 NUEVO: guardar cookie simple
+            document.cookie = "logged=true; path=/";
+
             window.location.href = '/';
         } else {
             alert('Error en login');

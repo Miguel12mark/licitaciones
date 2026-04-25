@@ -11,5 +11,18 @@
         <li><a href="/productos/">Productos</a></li>
         <li><a href="/licitaciones/">Licitaciones</a></li>
     </ul>
+
+    <button onclick="logout()">Cerrar sesión</button>
+
+<script>
+function logout() {
+    localStorage.removeItem('token');
+
+    // borrar cookie
+    document.cookie = "logged=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+    window.location.href = '/login/';
+}
+</script>
 </body>
 </html>
