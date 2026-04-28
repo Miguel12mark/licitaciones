@@ -15,7 +15,14 @@ class Licitacion(models.Model):
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     presupuesto_maximo = models.DecimalField(max_digits=12, decimal_places=2)
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='activa')
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS,
+        default='activa'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -24,16 +31,21 @@ class Licitacion(models.Model):
         related_name="licitaciones_creadas"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="licitaciones_actualizadas"
+    )
 
     def __str__(self):
         return f"Licitación #{self.pk}"
 
-    # 🔥 REGLA DE NEGOCIO CENTRAL (muy importante)
     def puede_modificarse(self):
         return self.estado == 'activa'
-    
+
+
 class LicitacionProducto(models.Model):
     licitacion = models.ForeignKey(Licitacion, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
@@ -43,6 +55,14 @@ class LicitacionProducto(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="productos_licitacion_creados"
+    )
+
     class Meta:
         unique_together = ('licitacion', 'producto')
 
@@ -51,4 +71,3 @@ class LicitacionProducto(models.Model):
 
     def __str__(self):
         return f"{self.producto.nombre} x {self.cantidad}"
-    

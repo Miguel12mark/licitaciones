@@ -1,14 +1,198 @@
-<h2>Licitaciones</h2>
+<!doctype html>
+<html>
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-<ul>
-    {% for l in licitaciones %}
-        <li>
-            ID: {{ l.id }} |
-            Cliente: {{ l.cliente.nombre }} |
-            Estado: {{ l.estado }} |
-            Presupuesto: {{ l.presupuesto_maximo }}
-        </li>
-    {% endfor %}
-</ul>
+<body class="bg-light">
 
-<a href="/">Volver</a>
+<div class="container mt-4">
+
+  <a href="/" class="btn btn-secondary mb-3">← Volver</a>
+
+  <h2 class="mb-4">Licitaciones</h2>
+
+  <!-- CREAR -->
+  <div class="card p-3 mb-4 shadow-sm">
+    <h5>Nueva Licitación</h5>
+    <input id="presupuesto" class="form-control mb-2" placeholder="Presupuesto máximo">
+    <button onclick="crearLicitacion()" class="btn btn-primary">
+      Crear
+    </button>
+  </div>
+
+  <table class="table table-striped shadow-sm bg-white">
+    <thead class="table-dark">
+      <tr>
+        <th>ID</th>
+        <th>Estado</th>
+        <th>Presupuesto</th>
+        <th>Total</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tabla"></tbody>
+  </table>
+
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+const params = new URLSearchParams(window.location.search);
+const clienteId = params.get("cliente");
+
+if (!token) {
+  alert("Sesión expirada");
+  window.location.href = "/login/";
+}
+
+function estadoColor(estado) {
+  if (estado === "activa") return "badge bg-primary";
+  if (estado === "finalizada") return "badge bg-secondary";
+  if (estado === "por_cobrar") return "badge bg-success";
+  if (estado === "perdida") return "badge bg-danger";
+  return "badge bg-light text-dark";
+}
+
+function renderBotones(l) {
+  if (l.estado === "activa") {
+    return `
+      <button class="btn btn-sm btn-warning me-1"
+        onclick="cambiarEstado(${l.id}, 'finalizada')">
+        Finalizar
+      </button>
+    `;
+  }
+
+  if (l.estado === "finalizada") {
+    return `
+      <button class="btn btn-sm btn-success me-1"
+        onclick="cambiarEstado(${l.id}, 'por_cobrar')">
+        Ganada
+      </button>
+      <button class="btn btn-sm btn-danger"
+        onclick="cambiarEstado(${l.id}, 'perdida')">
+        Perdida
+      </button>
+    `;
+  }
+
+  return `<span class="text-muted">Cerrada</span>`;
+}
+
+function cargar() {
+  let url = "/api/licitaciones/";
+
+  if (clienteId) {
+    url += `?cliente=${clienteId}`;
+  }
+
+  fetch(url, {
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+  })
+  .then(res => res.json())
+  .then(data => {
+    const tabla = document.getElementById("tabla");
+    tabla.innerHTML = "";
+
+    data.forEach(l => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>#${l.id}</td>
+
+        <td>
+          <span class="${estadoColor(l.estado)}">
+            ${l.estado}
+          </span>
+        </td>
+
+        <td>$${l.presupuesto_maximo}</td>
+
+        <td class="${
+          l.total > l.presupuesto_maximo ? 'text-danger fw-bold' : ''
+        }">
+          $${l.total}
+        </td>
+
+        <td>
+          <button class="btn btn-sm btn-info me-1"
+            onclick="verProductos(${l.id}, '${l.estado}')">
+            Productos
+          </button>
+
+          ${renderBotones(l)}
+        </td>
+      `;
+
+      tabla.appendChild(tr);
+    });
+  });
+}
+
+function crearLicitacion() {
+  if (!clienteId) {
+    alert("Debes entrar desde un cliente");
+    return;
+  }
+
+  const presupuesto = document.getElementById("presupuesto").value;
+
+  if (!presupuesto || presupuesto <= 0) {
+    alert("Presupuesto inválido");
+    return;
+  }
+
+  fetch("/api/licitaciones/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify({
+      cliente: clienteId,
+      presupuesto_maximo: presupuesto
+    }),
+  })
+  .then(() => {
+    document.getElementById("presupuesto").value = "";
+    cargar();
+  });
+}
+
+function cambiarEstado(id, estado) {
+  fetch(`/api/licitaciones/${id}/cambiar_estado/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify({ estado }),
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      alert(data.error);
+    } else {
+      alert(data.message || "Estado actualizado");
+      cargar();
+    }
+  });
+}
+
+function verProductos(id, estado) {
+  if (estado !== "activa") {
+    alert("Solo puedes modificar licitaciones activas");
+    return;
+  }
+
+  window.location.href = `/productos-view/?licitacion=${id}`;
+}
+
+cargar();
+</script>
+
+</body>
+</html>

@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 
 class Producto(models.Model):
@@ -8,14 +9,29 @@ class Producto(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="productos_creados"
+    )
+
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="productos_actualizados"
+    )
+
     def clean(self):
         if self.precio <= 0:
             raise ValidationError("El precio debe ser mayor a 0")
 
     def save(self, *args, **kwargs):
-        self.full_clean()  # 🔥 esto ejecuta clean()
+        self.full_clean()
         super().save(*args, **kwargs)
 
-    def __str__(self): # pylint: disable=invalid-str-returned
-        return self.nombre
+    def __str__(self):
+        return str(self.nombre)

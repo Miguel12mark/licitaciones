@@ -1,28 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <title>Licitaciones</title>
-</head>
-<body>
-    <h1>🚀 Sistema de Licitaciones</h1>
+  <head>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <title>Dashboard</title>
+  </head>
+  <body class="bg-light">
+    <div class="container mt-5">
 
-    <ul>
-        <li><a href="/clientes/">Clientes</a></li>
-        <li><a href="/productos/">Productos</a></li>
-        <li><a href="/licitaciones/">Licitaciones</a></li>
-    </ul>
+    <div class="d-flex justify-content-between mb-4">
+        <h2>Dashboard</h2>
+        <button class="btn btn-danger" onclick="logout()">Cerrar sesión</button>
+    </div>
 
-    <button onclick="logout()">Cerrar sesión</button>
+    <div class="row">
+        <div class="col-md-4">
+            <a href="/clientes-view/" class="btn btn-primary w-100 p-3">Clientes</a>
+        </div>
+        <div class="col-md-4">
+            <a href="/licitaciones-view/" class="btn btn-success w-100 p-3">Licitaciones</a>
+        </div>
+        <div class="col-md-4">
+            <a href="/productos-view/" class="btn btn-warning w-100 p-3">Productos</a>
+        </div>
+    </div>
 
-<script>
-function logout() {
-    localStorage.removeItem('token');
+    <div id="admin-section" class="mt-4" style="display:none;">
+        <h4>Administración</h4>
+        <a href="/crear-usuario/" class="btn btn-dark">Crear usuario</a>
+    </div>
 
-    // borrar cookie
-    document.cookie = "logged=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const token = localStorage.getItem("token");
 
-    window.location.href = '/login/';
-}
-</script>
-</body>
+      fetch("/api/perfil/", {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.role === "admin") {
+            document.getElementById("admin-section").style.display = "block";
+          }
+        });
+
+      function logout() {
+        localStorage.removeItem("token");
+        document.cookie =
+          "logged=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        window.location.href = "/login/";
+      }
+    </script>
+  </body>
 </html>

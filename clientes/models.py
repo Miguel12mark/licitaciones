@@ -15,5 +15,13 @@ class Cliente(models.Model):
         related_name="clientes_creados"
     )
 
-    def __str__(self): # pylint: disable=invalid-str-returned
-        return self.nombre
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clientes_actualizados"
+    )
+
+    def __str__(self):
+        return str(self.nombre)

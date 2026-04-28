@@ -7,9 +7,6 @@ router = DefaultRouter()
 router.register(r'licitaciones', LicitacionViewSet, basename='licitaciones')
 
 urlpatterns = [
-    # 🔥 HTML
     path('licitaciones-view/', licitaciones_view),
-
-    # 🔗 API
     path('', include(router.urls)),
 ]

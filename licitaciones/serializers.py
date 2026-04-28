@@ -1,10 +1,17 @@
 from rest_framework import serializers
 from .models import Licitacion, LicitacionProducto
 from productos.models import Producto
-from clientes.models import Cliente
 
-# 🔗 Serializer intermedio
-class LicitacionProductoSerializer(serializers.ModelSerializer):
+
+class AuditSerializer(serializers.ModelSerializer):
+    created_by = serializers.CharField(source='created_by.email', read_only=True)
+    updated_by = serializers.CharField(source='updated_by.email', read_only=True)
+
+    class Meta:
+        abstract = True
+
+
+class LicitacionProductoSerializer(AuditSerializer):
     subtotal = serializers.SerializerMethodField()
 
     class Meta:
@@ -16,8 +23,10 @@ class LicitacionProductoSerializer(serializers.ModelSerializer):
         return obj.subtotal()
 
 
-# 📑 Serializer principal
-class LicitacionSerializer(serializers.ModelSerializer):
+
+class LicitacionSerializer(AuditSerializer):
+    cliente_nombre = serializers.CharField(source='cliente.nombre', read_only=True)
+
     productos = LicitacionProductoSerializer(
         source='licitacionproducto_set',
         many=True,
@@ -29,25 +38,15 @@ class LicitacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Licitacion
         fields = '__all__'
-     
-     
-    def validate_cliente(self, value):
-        if not Cliente.objects.filter(id=value.id).exists():
-            raise serializers.ValidationError("Cliente no existe")
-        return value
+
     def validate_presupuesto_maximo(self, value):
         if value <= 0:
             raise serializers.ValidationError("El presupuesto debe ser mayor a 0")
         return value
-       
+
     def get_total(self, obj):
-        return sum(
-            lp.cantidad * lp.precio_unitario
-            for lp in obj.licitacionproducto_set.all()
-        )
+        return sum(lp.subtotal() for lp in obj.licitacionproducto_set.all())
 
-
-# 🔥 Serializer para agregar productos
 class AddProductoSerializer(serializers.Serializer):
     producto_id = serializers.IntegerField()
     cantidad = serializers.IntegerField()
@@ -60,8 +59,8 @@ class AddProductoSerializer(serializers.Serializer):
 
         try:
             producto = Producto.objects.get(id=attrs['producto_id'])
-        except Producto.DoesNotExist as exc:
-            raise serializers.ValidationError("Producto no existe") from exc
+        except Producto.DoesNotExist:
+            raise serializers.ValidationError("Producto no existe")
 
         if attrs['cantidad'] <= 0:
             raise serializers.ValidationError("Cantidad debe ser mayor a 0")
@@ -74,9 +73,7 @@ class AddProductoSerializer(serializers.Serializer):
         )
 
         if total_actual + subtotal > licitacion.presupuesto_maximo:
-            raise serializers.ValidationError(
-                "Se excede el presupuesto máximo"
-            )
+            raise serializers.ValidationError("Se excede el presupuesto máximo")
 
         attrs['producto'] = producto
         attrs['licitacion'] = licitacion

@@ -1,9 +1,195 @@
-<h2>Productos</h2>
+<!doctype html>
+<html>
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-<ul>
-    {% for p in productos %}
-        <li>{{ p.nombre }} - ${{ p.precio }}</li>
-    {% endfor %}
-</ul>
+<body class="bg-light">
+<div id="mensaje" class="alert d-none"></div>
+<a href="/" class="btn btn-secondary">Volver</a>
+<div class="container mt-5">
 
-<a href="/">Volver</a>
+  <h2>Productos</h2>
+
+  <!-- CREAR PRODUCTO -->
+  <div class="card p-3 mb-3">
+    <h5>Nuevo Producto</h5>
+
+    <input id="nombre" class="form-control mb-2" placeholder="Nombre">
+    <input id="precio" class="form-control mb-2" placeholder="Precio">
+
+    <button onclick="crearProducto()" class="btn btn-primary">
+      Crear
+    </button>
+  </div>
+
+  <!-- CANTIDAD PARA LICITACION -->
+  <div class="mb-3">
+    <input id="cantidad" class="form-control" placeholder="Cantidad para agregar" value="1">
+  </div>
+  <h4>Productos en esta licitación</h4>
+<ul id="productos-licitacion"></ul>
+
+  <!-- LISTA -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+
+    <tbody id="tabla"></tbody>
+  </table>
+
+  
+
+</div>
+
+
+<script>
+const token = localStorage.getItem("token");
+const params = new URLSearchParams(window.location.search);
+const licitacionId = params.get("licitacion");
+
+if (!token) { mostrarMensaje("Sesión expirada"); window.location.href = "/login/"; }
+
+function cargar() {
+  fetch("/api/productos/", {
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+  })
+  .then(res => res.json())
+  .then(data => {
+    const tabla = document.getElementById("tabla");
+    tabla.innerHTML = "";
+
+    data.forEach(p => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${p.nombre}</td>
+        <td>${p.precio}</td>
+        <td>
+          ${
+            licitacionId
+              ? `<button class="btn btn-success btn-sm" onclick="agregar(${p.id})">
+                    Agregar
+                 </button>`
+              : ''
+          }
+        </td>
+      `;
+
+      tabla.appendChild(tr);
+    });
+  });
+}
+
+function crearProducto() {
+  const nombre = document.getElementById("nombre").value.trim();
+  const precio = document.getElementById("precio").value;
+
+  // 🔥 VALIDACIONES
+  if (!nombre) {
+    mostrarMensaje("El nombre es obligatorio");
+    return;
+  }
+
+  if (!precio || precio <= 0) {
+    mostrarMensaje("El precio debe ser mayor a 0");
+    return;
+  }
+
+  fetch("/api/productos/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify({
+      nombre: nombre,
+      precio: precio
+    }),
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.id) {
+      cargar();
+      document.getElementById("nombre").value = "";
+      document.getElementById("precio").value = "";
+    } else {
+      mostrarMensaje(JSON.stringify(data));
+    }
+  });
+}
+
+function agregar(productoId) {
+  const cantidad = document.getElementById("cantidad").value;
+
+  // 🔥 VALIDACIONES
+  if (!cantidad || cantidad <= 0) {
+    mostrarMensaje("La cantidad debe ser mayor a 0");
+    return;
+  }
+
+  fetch(`/api/licitaciones/${licitacionId}/add_producto/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify({
+      producto_id: productoId,
+      cantidad: cantidad
+    }),
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      mostrarMensaje(data.error);
+    } else {
+      mostrarMensaje(data.message);
+    }
+  });
+}
+
+function cargarProductosLicitacion() {
+  fetch(`/api/licitaciones/${licitacionId}/productos/`, {
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+  })
+  .then(res => res.json())
+  .then(data => {
+    const lista = document.getElementById("productos-licitacion");
+    lista.innerHTML = "";
+
+    data.forEach(p => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        ${p.nombre} |
+        Cantidad: ${p.cantidad} |
+        Subtotal: ${p.subtotal}
+      `;
+      lista.appendChild(li);
+    });
+  });
+}
+
+function mostrarMensaje(texto, tipo="danger") {
+  const div = document.getElementById("mensaje");
+  div.className = `alert alert-${tipo}`;
+  div.innerText = texto;
+  div.classList.remove("d-none");
+}
+
+cargar();
+cargarProductosLicitacion();
+
+</script>
+
+</body>
+</html>

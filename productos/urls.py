@@ -7,9 +7,6 @@ router = DefaultRouter()
 router.register(r'productos', ProductoViewSet, basename='productos')
 
 urlpatterns = [
-    # 🔥 HTML
     path('productos-view/', productos_view),
-
-    # 🔗 API
     path('', include(router.urls)),
 ]

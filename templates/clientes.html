@@ -1,9 +1,72 @@
-<h2>Clientes</h2>
+<!doctype html>
+<html>
+  <head>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+<a href="/" class="btn btn-secondary mt-3">Volver</a>
+<div class="container mt-5">
 
-<ul>
-    {% for cliente in clientes %}
-        <li>{{ cliente.nombre }}</li>
-    {% endfor %}
-</ul>
+    <h2>Clientes</h2>
 
-<a href="/">Volver</a>
+    <div class="card p-3 mb-4">
+        <input id="nombre" class="form-control mb-2" placeholder="Nombre cliente">
+        <button class="btn btn-primary" onclick="crearCliente()">Crear</button>
+    </div>
+
+    <ul id="lista" class="list-group"></ul>
+
+    
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const token = localStorage.getItem("token");
+
+      function cargarClientes() {
+        fetch("/api/clientes/", {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            const lista = document.getElementById("lista");
+            lista.innerHTML = "";
+
+            data.forEach((c) => {
+              const li = document.createElement("li");
+
+              li.innerHTML = `
+                ${c.nombre}
+                <button onclick="verLicitaciones(${c.id})">Licitaciones</button>
+            `;
+
+              lista.appendChild(li);
+            });
+          });
+      }
+
+      function crearCliente() {
+        fetch("/api/clientes/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({
+            nombre: document.getElementById("nombre").value,
+          }),
+        }).then(() => cargarClientes());
+      }
+
+      function verLicitaciones(clienteId) {
+        window.location.href = `/licitaciones-view/?cliente=${clienteId}`;
+      }
+
+      cargarClientes();
+    </script>
+  </body>
+</html>

@@ -1,21 +1,39 @@
+from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import render
-from .models import Licitacion
-from .serializers import (
-    LicitacionSerializer,
-    AddProductoSerializer
-)
 
+from .models import Licitacion
+from .serializers import LicitacionSerializer, AddProductoSerializer
+
+
+def licitaciones_view(request):
+    return render(request, 'licitaciones.html')
 
 class LicitacionViewSet(viewsets.ModelViewSet):
-    queryset = Licitacion.objects.all().order_by('-created_at')
     serializer_class = LicitacionSerializer
     permission_classes = [IsAuthenticated]
 
-    # 🔥 AGREGAR PRODUCTO
+    def get_queryset(self):
+        queryset = Licitacion.objects.all().order_by('-created_at')
+
+        cliente_id = self.request.query_params.get('cliente')
+
+        if cliente_id:
+            queryset = queryset.filter(cliente_id=cliente_id)
+
+        return queryset
+    
+    def perform_create(self, serializer):
+        serializer.save(
+            created_by=self.request.user,
+            updated_by=self.request.user
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(updated_by=self.request.user)
+
     @action(detail=True, methods=['post'])
     def add_producto(self, request, pk=None):
         licitacion = self.get_object()
@@ -34,9 +52,8 @@ class LicitacionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response({"message": "Producto agregado correctamente"}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Producto agregado correctamente"})
 
-    # 🔥 CAMBIAR ESTADO
     @action(detail=True, methods=['patch'])
     def cambiar_estado(self, request, pk=None):
         licitacion = self.get_object()
@@ -50,7 +67,6 @@ class LicitacionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 🚨 REGLA: no reactivar cerradas
         if licitacion.estado in ['finalizada', 'perdida'] and nuevo_estado == 'activa':
             return Response(
                 {"error": "No se puede reactivar una licitación cerrada"},
@@ -61,13 +77,20 @@ class LicitacionViewSet(viewsets.ModelViewSet):
         licitacion.save()
 
         return Response({"message": "Estado actualizado correctamente"})
-
-    # 🔥 DETALLE (override correcto)
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
     
-def licitaciones_view(request):
-    licitaciones = Licitacion.objects.all()
-    return render(request, 'licitaciones.html', {'licitaciones': licitaciones})
+    @action(detail=True, methods=['get'])
+    def productos(self, request, pk=None):
+        licitacion = self.get_object()
+    
+        data = [
+            {
+                "id": lp.producto.id,
+                "nombre": lp.producto.nombre,
+                "precio": lp.precio_unitario,
+                "cantidad": lp.cantidad,
+                "subtotal": lp.cantidad * lp.precio_unitario
+            }
+            for lp in licitacion.licitacionproducto_set.all()
+        ]
+    
+        return Response(data)
